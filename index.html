@@ -165,17 +165,19 @@ async function save(){
   var id="i"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
   var rec=Object.assign({},data,{criadoEm:new Date().toISOString()});
   var saved=false;
-  try{if(SHEET_URL){await fetch(SHEET_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(rec)})}}catch(e){}
+  var sheetOk=false;
+  if(SHEET_URL){try{var resp=await fetch(SHEET_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(rec)});var rt=await resp.text();sheetOk=/^ok/.test(rt.trim())}catch(e){}}
   try{
     var db=await claude.use("db"),us=await claude.use("user");
     if(db&&us){id=await us.id();await db.collection("registrations").doc(id).set(rec);saved=true}
   }catch(e){}
   progress();$("pg").style.width="100%";
-  var msg="Obrigado, "+data.nome.split(" ")[0]+"! 🙏\nFalta só um passo: toque no botão “Enviar minha inscrição por WhatsApp” abaixo para a equipe receber os seus dados. A inscrição só vale depois de enviada.\n\nDepois disso, a equipe responde com as informações de local, valores e como concluir o pagamento na forma escolhida.";
+  var nome1=data.nome.split(" ")[0];
+  var msg=sheetOk?"Inscrição recebida, "+nome1+"! ✅\nSeus dados já foram enviados para a organização. A equipe responde com as informações de local, valores e como concluir o pagamento na forma escolhida.\n\nSe quiser, avise a equipe também pelo WhatsApp.":"Obrigado, "+nome1+"! 🙏\nFalta só um passo: toque no botão “Enviar minha inscrição por WhatsApp” abaixo para a equipe receber os seus dados. A inscrição só vale depois de enviada.\n\nDepois disso, a equipe responde com as informações de local, valores e como concluir o pagamento na forma escolhida.";
   bot(msg,function(){
     mood("happy",2400);
     var text="Inscrição · Retiro Cura da História da Vida (05 a 08/02/2027)\n\n"+summary();
-    if(ORG_WHATSAPP){var a=document.createElement("a");a.className="p";a.target="_blank";a.rel="noopener";a.textContent="Enviar minha inscrição por WhatsApp";a.href="https://wa.me/"+ORG_WHATSAPP+"?text="+encodeURIComponent(text);act.appendChild(a)}
+    if(ORG_WHATSAPP){var a=document.createElement("a");a.className="p";a.target="_blank";a.rel="noopener";a.textContent=sheetOk?"Avisar a equipe pelo WhatsApp (opcional)":"Enviar minha inscrição por WhatsApp";a.href="https://wa.me/"+ORG_WHATSAPP+"?text="+encodeURIComponent(text);act.appendChild(a)}
     btn(act,"Copiar meus dados",function(e){var b=e.target;try{navigator.clipboard.writeText(text).then(function(){b.textContent="Copiado"})}catch(x){b.textContent="Não foi possível copiar"}});
     btn(act,"Nova inscrição",intro);
   });
