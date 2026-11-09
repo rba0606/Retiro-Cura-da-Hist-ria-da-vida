@@ -88,6 +88,8 @@ form.off{display:none}
 <script>
 // Número do organizador com DDI+DDD, só dígitos (ex.: "5561999999999"). Vazio = sem botão de WhatsApp.
 var ORG_WHATSAPP = "5561981316593";
+// Endereço do Google Apps Script (termina em /exec). Vazio = não grava na planilha.
+var SHEET_URL = "https://script.google.com/macros/s/AKfycbwC3ASiAsSU0dCTzK6DeL18dbIZJfjQAYbueMJa9aV9b8-MiLlkn88P3sd5R8B7GNPf/exec";
 
 var STEPS = [
  {k:"nome",q:"Qual é o seu nome completo?",v:function(t){return t.trim().split(/\s+/).length>=2||"Digite nome e sobrenome."}},
@@ -163,6 +165,7 @@ async function save(){
   var id="i"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
   var rec=Object.assign({},data,{criadoEm:new Date().toISOString()});
   var saved=false;
+  try{if(SHEET_URL){await fetch(SHEET_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(rec)})}}catch(e){}
   try{
     var db=await claude.use("db"),us=await claude.use("user");
     if(db&&us){id=await us.id();await db.collection("registrations").doc(id).set(rec);saved=true}
