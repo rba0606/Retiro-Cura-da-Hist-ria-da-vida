@@ -89,6 +89,7 @@ form.off{display:none}
 // Número do organizador com DDI+DDD, só dígitos (ex.: "5561999999999"). Vazio = sem botão de WhatsApp.
 var ORG_WHATSAPP = "5561981316593";
 // Endereço do Google Apps Script (termina em /exec). Vazio = não grava na planilha.
+var VAGAS_MAX = 50;
 var SHEET_URL = "https://script.google.com/macros/s/AKfycbwC3ASiAsSU0dCTzK6DeL18dbIZJfjQAYbueMJa9aV9b8-MiLlkn88P3sd5R8B7GNPf/exec";
 
 var STEPS = [
@@ -121,13 +122,19 @@ function clearUI(){opts.innerHTML="";act.innerHTML="";form.className="off"}
 function btn(parent,label,fn,cls){var b=document.createElement("button");b.textContent=label;if(cls)b.className=cls;b.onclick=fn;parent.appendChild(b)}
 
 function startFlow(label){add(label,"me");clearUI();ask()}
-function intro(){
+async function getVagas(){
+  if(!SHEET_URL)return null;
+  try{var c=new AbortController();var t=setTimeout(function(){c.abort()},3500);var r=await fetch(SHEET_URL+"?acao=vagas",{signal:c.signal});clearTimeout(t);var x=(await r.text()).trim().split("|");return x[0]==="vagas"?parseInt(x[1],10):null}catch(e){return null}
+}
+async function intro(){
   clearUI();log.innerHTML="";i=0;data={};
   mood("wave",3200);
+  var vg=await getVagas();
+  var vt=vg===null||isNaN(vg)?"":(vg>1?" Restam "+vg+" vagas de "+VAGAS_MAX+".":vg===1?" Resta 1 vaga de "+VAGAS_MAX+".":" As "+VAGAS_MAX+" vagas já foram preenchidas, mas você pode entrar na lista de espera.");
   botSeq([
     "Oi! 👋 Eu sou o SanTO, o assistente virtual do retiro.",
     "Aqui você faz a sua inscrição para o retiro “Cura da História da Vida”, de 05 a 08 de fevereiro de 2027, no feriado de carnaval.",
-    "São só "+STEPS.length+" perguntas rápidas, cerca de 2 minutos, e eu te acompanho em cada uma. Vamos começar?"
+    "São só "+STEPS.length+" perguntas rápidas, cerca de 2 minutos, e eu te acompanho em cada uma."+vt+" Vamos começar?"
   ],function(){
     opts.innerHTML="";
     btn(opts,"Sim, vamos começar!",function(){startFlow("Sim, vamos começar!")});
@@ -165,18 +172,20 @@ async function save(){
   var id="i"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
   var rec=Object.assign({},data,{criadoEm:new Date().toISOString()});
   var saved=false;
-  var sheetOk=false;
-  if(SHEET_URL){try{var resp=await fetch(SHEET_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(rec)});var rt=await resp.text();sheetOk=/^ok/.test(rt.trim())}catch(e){}}
+  var sheetOk=false,st="",pos="";
+  if(SHEET_URL){try{var resp=await fetch(SHEET_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(rec)});var rt=await resp.text();var pp=rt.trim().split("|");sheetOk=pp[0]==="ok";st=pp[1]||"";pos=pp[2]||""}catch(e){}}
   try{
     var db=await claude.use("db"),us=await claude.use("user");
     if(db&&us){id=await us.id();await db.collection("registrations").doc(id).set(rec);saved=true}
   }catch(e){}
   progress();$("pg").style.width="100%";
   var nome1=data.nome.split(" ")[0];
-  var msg=sheetOk?"Inscrição recebida, "+nome1+"! ✅\nSeus dados já foram enviados para a organização. A equipe responde com as informações de local, valores e como concluir o pagamento na forma escolhida.\n\nSe quiser, avise a equipe também pelo WhatsApp.":"Obrigado, "+nome1+"! 🙏\nFalta só um passo: toque no botão “Enviar minha inscrição por WhatsApp” abaixo para a equipe receber os seus dados. A inscrição só vale depois de enviada.\n\nDepois disso, a equipe responde com as informações de local, valores e como concluir o pagamento na forma escolhida.";
+  var esp=st==="espera"||(st==="ja"&&pos==="espera");
+  var okMsg=st==="espera"?"Obrigado, "+nome1+"! ⏳\nAs "+VAGAS_MAX+" vagas já foram preenchidas, mas a sua inscrição ficou na lista de espera (posição "+pos+"). Se uma vaga abrir, a equipe entra em contato pelo WhatsApp.\n\nSe quiser, avise a equipe também pelo WhatsApp.":st==="ja"?"Você já tinha enviado a inscrição com esse WhatsApp, "+nome1+". Não precisa enviar de novo. "+(esp?"Você está na lista de espera.":"Sua vaga está registrada."):"Inscrição recebida, "+nome1+"! ✅\nSua vaga está registrada (nº "+pos+" de "+VAGAS_MAX+"). A equipe responde com as informações de local, valores e como concluir o pagamento na forma escolhida.\n\nSe quiser, avise a equipe também pelo WhatsApp.";
+  var msg=sheetOk?okMsg:"Obrigado, "+nome1+"! 🙏\nFalta só um passo: toque no botão “Enviar minha inscrição por WhatsApp” abaixo para a equipe receber os seus dados. A inscrição só vale depois de enviada.\n\nDepois disso, a equipe responde com as informações de local, valores e como concluir o pagamento na forma escolhida.";
   bot(msg,function(){
     mood("happy",2400);
-    var text="Inscrição · Retiro Cura da História da Vida (05 a 08/02/2027)\n\n"+summary();
+    var text="Inscrição"+(esp?" (LISTA DE ESPERA)":"")+" · Retiro Cura da História da Vida (05 a 08/02/2027)\n\n"+summary();
     if(ORG_WHATSAPP){var a=document.createElement("a");a.className="p";a.target="_blank";a.rel="noopener";a.textContent=sheetOk?"Avisar a equipe pelo WhatsApp (opcional)":"Enviar minha inscrição por WhatsApp";a.href="https://wa.me/"+ORG_WHATSAPP+"?text="+encodeURIComponent(text);act.appendChild(a)}
     btn(act,"Copiar meus dados",function(e){var b=e.target;try{navigator.clipboard.writeText(text).then(function(){b.textContent="Copiado"})}catch(x){b.textContent="Não foi possível copiar"}});
     btn(act,"Nova inscrição",intro);
