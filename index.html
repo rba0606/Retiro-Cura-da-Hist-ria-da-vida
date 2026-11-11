@@ -70,26 +70,56 @@ form.off{display:none}
 #adm button{background:none;border:0;color:inherit;text-decoration:underline;cursor:pointer;font:inherit;padding:0}
 #list{display:none;margin:0 16px 12px;padding:12px;border:1px solid var(--line);border-radius:12px;font-size:.85rem;max-height:200px;overflow:auto;background:var(--bot)}
 </style>
+<style id="modern">
+body{align-items:stretch}
+.app{position:relative;overflow:hidden;background:color-mix(in srgb,var(--panel) 62%,transparent);-webkit-backdrop-filter:blur(18px) saturate(1.2);backdrop-filter:blur(18px) saturate(1.2)}
+@media (min-width:700px){body{align-items:center;padding:24px 0}.app{height:min(880px,100%);border-radius:30px;box-shadow:0 30px 80px -20px rgba(90,25,30,.45),0 0 0 1px rgba(255,255,255,.35)}}
+header{border:0;padding:20px 20px 16px;background:linear-gradient(135deg,#7d2f3a 0%,#a8424f 100%)}
+#rbw{width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,.14);display:grid;place-items:center;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.25)}
+.robot{width:48px;height:48px}
+header h1{font-size:1.45rem;letter-spacing:-.01em}
+header p{font-size:.85rem}
+.meta{display:flex;align-items:center;gap:12px;margin-top:14px}
+#stp{font-size:.7rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;background:rgba(255,255,255,.16);padding:4px 10px;border-radius:999px}
+.bar{flex:1;margin:0;height:5px;background:rgba(255,255,255,.2)}
+.bar i{background:linear-gradient(90deg,#ffd0c0,#e8896f);border-radius:3px}
+#log{padding:22px 16px 10px;gap:12px;scroll-behavior:smooth;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+.m{border-radius:20px;padding:12px 16px;box-shadow:0 1px 2px rgba(60,20,25,.1);animation:pop .3s ease both}
+.m.bot{border:0;border-bottom-left-radius:6px}
+.m.me{background:linear-gradient(135deg,#7d2f3a,#a8424f);color:#fff4ee;border-bottom-right-radius:6px}
+@keyframes pop{from{opacity:0;transform:translateY(8px) scale(.98)}}
+.opts{padding:2px 16px 12px}
+.opts button,.act button,.act a{background:var(--bot);border:1.5px solid var(--line);border-radius:999px;padding:10px 16px;box-shadow:0 1px 2px rgba(60,20,25,.08);transition:transform .15s,background .15s}
+.opts button:hover,.act button:hover{transform:translateY(-1px)}
+.opts button:active,.act button:active{transform:scale(.97)}
+.act .p{background:linear-gradient(135deg,#7d2f3a,#a8424f);color:#fff4ee;border-color:transparent}
+form{margin:4px 14px 14px;padding:6px 6px 6px 16px;border:1.5px solid var(--line);border-radius:999px;background:var(--bot);box-shadow:0 6px 20px -8px rgba(90,25,30,.35)}
+input{border:0;background:transparent;padding:10px 4px}
+input:focus{outline:none}
+form:focus-within{border-color:var(--gold);box-shadow:0 0 0 3px color-mix(in srgb,var(--gold) 35%,transparent)}
+form button{width:44px;height:44px;padding:0;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#e8896f,#d96a55)}
+form button svg{width:20px;height:20px}
+@media (prefers-reduced-motion:reduce){.m{animation:none}}
+</style>
 </head>
 <body>
 <div class="app">
 <header>
 <div class="top"><button id="rbw" type="button" aria-label="Cumprimentar o SanTO"></button><div><h1>Cura da História da Vida</h1>
 <p>Retiro de carnaval · 05 a 08 de fevereiro de 2027</p></div></div>
-<div class="bar"><i id="pg"></i></div>
+<div class="meta"><span id="stp">Boas-vindas</span><div class="bar"><i id="pg"></i></div></div>
 </header>
 <div id="log" aria-live="polite"></div>
 <div id="opts" class="opts"></div>
 <div id="act" class="act"></div>
 <div id="adm"><button id="admb">Ver inscrições recebidas</button></div>
 <div id="list"></div>
-<form id="f" class="off" autocomplete="off"><input id="in" aria-label="Sua resposta"><button>Enviar</button></form>
+<form id="f" class="off" autocomplete="off"><input id="in" aria-label="Sua resposta"><button aria-label="Enviar"><svg viewBox="0 0 24 24" fill="none" stroke="#2a1010" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></form>
 </div>
 <script>
 // Número do organizador com DDI+DDD, só dígitos (ex.: "5561999999999"). Vazio = sem botão de WhatsApp.
 var ORG_WHATSAPP = "5561981316593";
 // Endereço do Google Apps Script (termina em /exec). Vazio = não grava na planilha.
-var VAGAS_MAX = 50;
 var SHEET_URL = "https://script.google.com/macros/s/AKfycbwC3ASiAsSU0dCTzK6DeL18dbIZJfjQAYbueMJa9aV9b8-MiLlkn88P3sd5R8B7GNPf/exec";
 
 var STEPS = [
@@ -100,11 +130,10 @@ var STEPS = [
  {k:"cidade",q:"Em qual cidade você mora?",v:function(t){return t.trim().length>=2||"Digite o nome da cidade."}},
  {k:"primeira",q:"É o seu primeiro retiro desse tipo?",c:["Sim, é o primeiro","Já participei de outros"]},
  {k:"saude",q:"Tem alguma restrição alimentar, alergia ou cuidado de saúde que a equipe deva saber?",c:["Nenhuma"],ph:"Ou escreva aqui"},
- {k:"emerg",q:"Para sua segurança: nome e telefone de uma pessoa de contato para emergências.",v:function(t){return t.trim().length>=8||"Informe nome e telefone."}},
  {k:"pagto",q:"Qual forma de pagamento você prefere?",c:["PIX","Cartão de crédito","Cartão de débito"],ph:"Escolha uma das opções",v:function(t){return ["PIX","Cartão de crédito","Cartão de débito"].indexOf(t)>-1||"Escolha uma das opções: PIX, Cartão de crédito ou Cartão de débito."}},
  {k:"obs",q:"Quer deixar alguma mensagem ou pergunta para a equipe organizadora?",c:["Não, obrigado(a)"],ph:"Ou escreva aqui"}
 ];
-var LABEL={nome:"Nome",whats:"WhatsApp",email:"E-mail",nasc:"Nascimento",cidade:"Cidade",primeira:"Primeiro retiro",saude:"Saúde/alimentação",emerg:"Contato de emergência",pagto:"Forma de pagamento",obs:"Mensagem"};
+var LABEL={nome:"Nome",whats:"WhatsApp",email:"E-mail",nasc:"Nascimento",cidade:"Cidade",primeira:"Primeiro retiro",saude:"Saúde/alimentação",pagto:"Forma de pagamento",obs:"Mensagem"};
 var $=function(i){return document.getElementById(i)};
 var log=$("log"),inp=$("in"),form=$("f"),opts=$("opts"),act=$("act");
 var i=0,data={},busy=false,wait=false;
@@ -122,26 +151,20 @@ function clearUI(){opts.innerHTML="";act.innerHTML="";form.className="off"}
 function btn(parent,label,fn,cls){var b=document.createElement("button");b.textContent=label;if(cls)b.className=cls;b.onclick=fn;parent.appendChild(b)}
 
 function startFlow(label){add(label,"me");clearUI();ask()}
-async function getVagas(){
-  if(!SHEET_URL)return null;
-  try{var c=new AbortController();var t=setTimeout(function(){c.abort()},3500);var r=await fetch(SHEET_URL+"?acao=vagas",{signal:c.signal});clearTimeout(t);var x=(await r.text()).trim().split("|");return x[0]==="vagas"?parseInt(x[1],10):null}catch(e){return null}
-}
-async function intro(){
-  clearUI();log.innerHTML="";i=0;data={};
+function intro(){
+  clearUI();log.innerHTML="";i=0;data={};$("stp").textContent="Boas-vindas";$("pg").style.width="0";
   mood("wave",3200);
-  var vg=await getVagas();
-  var vt=vg===null||isNaN(vg)?"":(vg>1?" Restam "+vg+" vagas de "+VAGAS_MAX+".":vg===1?" Resta 1 vaga de "+VAGAS_MAX+".":" As "+VAGAS_MAX+" vagas já foram preenchidas, mas você pode entrar na lista de espera.");
   botSeq([
     "Oi! 👋 Eu sou o SanTO, o assistente virtual do retiro.",
     "Aqui você faz a sua inscrição para o retiro “Cura da História da Vida”, de 05 a 08 de fevereiro de 2027, no feriado de carnaval.",
-    "São só "+STEPS.length+" perguntas rápidas, cerca de 2 minutos, e eu te acompanho em cada uma."+vt+" Vamos começar?"
+    "São só "+STEPS.length+" perguntas rápidas, cerca de 2 minutos, e eu te acompanho em cada uma. Vamos começar?"
   ],function(){
     opts.innerHTML="";
     btn(opts,"Sim, vamos começar!",function(){startFlow("Sim, vamos começar!")});
     btn(opts,"Tenho uma dúvida",function(){add("Tenho uma dúvida","me");clearUI();bot("Local e valores são confirmados pela organização depois da sua inscrição. O pagamento pode ser feito por PIX, cartão de crédito ou cartão de débito.\nSe preferir falar com uma pessoa, conclua a inscrição e a equipe entra em contato pelo WhatsApp.",function(){btn(opts,"Quero me inscrever",function(){startFlow("Quero me inscrever")})})});
   });
 }
-function progress(){$("pg").style.width=Math.round(i/STEPS.length*100)+"%"}
+function progress(){$("pg").style.width=Math.round(i/STEPS.length*100)+"%";$("stp").textContent=i>=STEPS.length?"Revisão final":"Pergunta "+(i+1)+" de "+STEPS.length}
 function ask(){
   progress();
   if(i>=STEPS.length)return review();
@@ -178,14 +201,13 @@ async function save(){
     var db=await claude.use("db"),us=await claude.use("user");
     if(db&&us){id=await us.id();await db.collection("registrations").doc(id).set(rec);saved=true}
   }catch(e){}
-  progress();$("pg").style.width="100%";
+  progress();$("pg").style.width="100%";$("stp").textContent="Inscrição enviada ✅";
   var nome1=data.nome.split(" ")[0];
-  var esp=st==="espera"||(st==="ja"&&pos==="espera");
-  var okMsg=st==="espera"?"Obrigado, "+nome1+"! ⏳\nAs "+VAGAS_MAX+" vagas já foram preenchidas, mas a sua inscrição ficou na lista de espera (posição "+pos+"). Se uma vaga abrir, a equipe entra em contato pelo WhatsApp.\n\nSe quiser, avise a equipe também pelo WhatsApp.":st==="ja"?"Você já tinha enviado a inscrição com esse WhatsApp, "+nome1+". Não precisa enviar de novo. "+(esp?"Você está na lista de espera.":"Sua vaga está registrada."):"Inscrição recebida, "+nome1+"! ✅\nSua vaga está registrada (nº "+pos+" de "+VAGAS_MAX+"). A equipe responde com as informações de local, valores e como concluir o pagamento na forma escolhida.\n\nSe quiser, avise a equipe também pelo WhatsApp.";
+  var okMsg=st==="ja"?"Você já tinha enviado a inscrição com esse WhatsApp, "+nome1+". Não precisa enviar de novo.":"Inscrição recebida, "+nome1+"! ✅\nSeus dados já foram enviados para a organização. A equipe responde com as informações de local, valores e como concluir o pagamento na forma escolhida.\n\nSe quiser, avise a equipe também pelo WhatsApp.";
   var msg=sheetOk?okMsg:"Obrigado, "+nome1+"! 🙏\nFalta só um passo: toque no botão “Enviar minha inscrição por WhatsApp” abaixo para a equipe receber os seus dados. A inscrição só vale depois de enviada.\n\nDepois disso, a equipe responde com as informações de local, valores e como concluir o pagamento na forma escolhida.";
   bot(msg,function(){
     mood("happy",2400);
-    var text="Inscrição"+(esp?" (LISTA DE ESPERA)":"")+" · Retiro Cura da História da Vida (05 a 08/02/2027)\n\n"+summary();
+    var text="Inscrição · Retiro Cura da História da Vida (05 a 08/02/2027)\n\n"+summary();
     if(ORG_WHATSAPP){var a=document.createElement("a");a.className="p";a.target="_blank";a.rel="noopener";a.textContent=sheetOk?"Avisar a equipe pelo WhatsApp (opcional)":"Enviar minha inscrição por WhatsApp";a.href="https://wa.me/"+ORG_WHATSAPP+"?text="+encodeURIComponent(text);act.appendChild(a)}
     btn(act,"Copiar meus dados",function(e){var b=e.target;try{navigator.clipboard.writeText(text).then(function(){b.textContent="Copiado"})}catch(x){b.textContent="Não foi possível copiar"}});
     btn(act,"Nova inscrição",intro);
