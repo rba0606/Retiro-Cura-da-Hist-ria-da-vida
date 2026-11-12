@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <title>Inscrições · Cura da História da Vida</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,600;1,400&family=Instrument+Sans:wght@400;500;600&display=swap">
 <style>
@@ -83,7 +83,7 @@ header p{font-size:.85rem}
 #stp{font-size:.7rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;background:rgba(255,255,255,.16);padding:4px 10px;border-radius:999px}
 .bar{flex:1;margin:0;height:5px;background:rgba(255,255,255,.2)}
 .bar i{background:linear-gradient(90deg,#ffd0c0,#e8896f);border-radius:3px}
-#log{padding:22px 16px 10px;gap:12px;scroll-behavior:smooth;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+#log{padding:22px 16px 10px;gap:12px;scroll-behavior:auto;overflow-anchor:none;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
 .m{border-radius:20px;padding:12px 16px;box-shadow:0 1px 2px rgba(60,20,25,.1);animation:pop .3s ease both}
 .m.bot{border:0;border-bottom-left-radius:6px}
 .m.me{background:linear-gradient(135deg,#7d2f3a,#a8424f);color:#fff4ee;border-bottom-right-radius:6px}
@@ -99,13 +99,14 @@ input:focus{outline:none}
 form:focus-within{border-color:var(--gold);box-shadow:0 0 0 3px color-mix(in srgb,var(--gold) 35%,transparent)}
 form button{width:44px;height:44px;padding:0;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#e8896f,#d96a55)}
 form button svg{width:20px;height:20px}
+html,body{height:100%;height:100dvh;overflow:hidden}
 @media (prefers-reduced-motion:reduce){.m{animation:none}}
 </style>
 </head>
 <body>
 <div class="app">
 <header>
-<div class="top"><button id="rbw" type="button" aria-label="Cumprimentar o SanTO"></button><div><h1>Cura da História da Vida</h1>
+<div class="top"><button id="rbw" type="button" aria-label="Cumprimentar o Rob"></button><div><h1>Cura da História da Vida</h1>
 <p>Retiro de carnaval · 05 a 08 de fevereiro de 2027</p></div></div>
 <div class="meta"><span id="stp">Boas-vindas</span><div class="bar"><i id="pg"></i></div></div>
 </header>
@@ -136,6 +137,9 @@ var STEPS = [
 var LABEL={nome:"Nome",whats:"WhatsApp",email:"E-mail",nasc:"Nascimento",cidade:"Cidade",primeira:"Primeiro retiro",saude:"Saúde/alimentação",pagto:"Forma de pagamento",obs:"Mensagem"};
 var $=function(i){return document.getElementById(i)};
 var log=$("log"),inp=$("in"),form=$("f"),opts=$("opts"),act=$("act");
+function toEnd(){log.scrollTop=log.scrollHeight}
+if(window.ResizeObserver)new ResizeObserver(toEnd).observe(log);
+if(window.visualViewport)visualViewport.addEventListener("resize",toEnd);
 var i=0,data={},busy=false,wait=false;
 
 function robot(c){return '<svg class="'+c+'" viewBox="0 0 80 80" aria-hidden="true"><line x1="40" y1="9" x2="40" y2="17" stroke="#7d2f3a" stroke-width="3"/><circle class="ant rb-a" cx="40" cy="7" r="4"/><rect class="rb-h" x="7" y="28" width="7" height="12" rx="3"/><rect class="rb-h" x="66" y="28" width="7" height="12" rx="3"/><rect class="rb-w" x="14" y="16" width="52" height="38" rx="14"/><rect class="rb-h" x="20" y="22" width="40" height="26" rx="10"/><ellipse class="eye rb-e" cx="32" cy="33" rx="3.5" ry="4.5"/><ellipse class="eye rb-e" cx="48" cy="33" rx="3.5" ry="4.5"/><path class="mouth rb-m" d="M33 41 Q40 47 47 41"/><rect class="arm2 rb-h" x="10" y="58" width="9" height="15" rx="4.5"/><rect class="rb-h" x="22" y="56" width="36" height="20" rx="8"/><circle class="rb-a" cx="40" cy="66" r="4.5"/><rect class="arm rb-h" x="61" y="58" width="9" height="15" rx="4.5"/></svg>'}
@@ -155,7 +159,7 @@ function intro(){
   clearUI();log.innerHTML="";i=0;data={};$("stp").textContent="Boas-vindas";$("pg").style.width="0";
   mood("wave",3200);
   botSeq([
-    "Oi! 👋 Eu sou o SanTO, o assistente virtual do retiro.",
+    "Oi! 👋 Eu sou o Rob, o assistente virtual do retiro.",
     "Aqui você faz a sua inscrição para o retiro “Cura da História da Vida”, de 05 a 08 de fevereiro de 2027, no feriado de carnaval.",
     "São só "+STEPS.length+" perguntas rápidas, cerca de 2 minutos, e eu te acompanho em cada uma. Vamos começar?"
   ],function(){
@@ -170,7 +174,7 @@ function ask(){
   if(i>=STEPS.length)return review();
   var s=STEPS[i];
   bot(s.q,function(){
-    form.className="";inp.placeholder=s.ph||"Digite aqui";inp.focus();
+    form.className="";inp.placeholder=s.ph||"Digite aqui";inp.focus({preventScroll:true});toEnd();
     opts.innerHTML="";(s.c||[]).forEach(function(c){btn(opts,c,function(){answer(c)})});
   });
 }
