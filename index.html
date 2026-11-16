@@ -99,7 +99,26 @@ input:focus{outline:none}
 form:focus-within{border-color:var(--gold);box-shadow:0 0 0 3px color-mix(in srgb,var(--gold) 35%,transparent)}
 form button{width:44px;height:44px;padding:0;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#e8896f,#d96a55)}
 form button svg{width:20px;height:20px}
-html,body{height:100%;height:100dvh;overflow:hidden}
+html,body{height:var(--vh,100dvh);overflow:hidden}
+body{position:fixed;top:0;left:0;right:0}
+.short{display:none}
+@media (max-width:600px){
+header{padding:12px 14px 10px}
+.top{gap:10px}
+#rbw{width:46px;height:46px}
+.robot{width:36px;height:36px}
+header h1{font-size:1.12rem;line-height:1.2}
+header p{font-size:.75rem;margin-top:2px}
+.full{display:none}.short{display:inline}
+.meta{margin-top:9px;gap:8px}
+#stp{font-size:.62rem;padding:3px 8px}
+.bar{height:4px}
+#log{padding:14px 12px 6px}
+}
+.kb header{padding-top:8px;padding-bottom:8px}
+.kb header p{display:none}
+.kb .meta{margin-top:6px}
+.kb #rbw{width:36px;height:36px}.kb .robot{width:28px;height:28px}
 @media (prefers-reduced-motion:reduce){.m{animation:none}}
 </style>
 </head>
@@ -107,7 +126,7 @@ html,body{height:100%;height:100dvh;overflow:hidden}
 <div class="app">
 <header>
 <div class="top"><button id="rbw" type="button" aria-label="Cumprimentar o Rob"></button><div><h1>Cura da História da Vida</h1>
-<p>Retiro de carnaval · 05 a 08 de fevereiro de 2027</p></div></div>
+<p><span class="full">Retiro de carnaval · 05 a 08 de fevereiro de 2027</span><span class="short">Carnaval · 05 a 08/02/2027</span></p></div></div>
 <div class="meta"><span id="stp">Boas-vindas</span><div class="bar"><i id="pg"></i></div></div>
 </header>
 <div id="log" aria-live="polite"></div>
@@ -131,7 +150,7 @@ var STEPS = [
  {k:"cidade",q:"Em qual cidade você mora?",v:function(t){return t.trim().length>=2||"Digite o nome da cidade."}},
  {k:"primeira",q:"É o seu primeiro retiro desse tipo?",c:["Sim, é o primeiro","Já participei de outros"]},
  {k:"saude",q:"Tem alguma restrição alimentar, alergia ou cuidado de saúde que a equipe deva saber?",c:["Nenhuma"],ph:"Ou escreva aqui"},
- {k:"pagto",q:"Qual forma de pagamento você prefere?",c:["PIX","Cartão de crédito","Cartão de débito"],ph:"Escolha uma das opções",v:function(t){return ["PIX","Cartão de crédito","Cartão de débito"].indexOf(t)>-1||"Escolha uma das opções: PIX, Cartão de crédito ou Cartão de débito."}},
+ {k:"pagto",q:"O valor do retiro é R$ 550,00. Qual forma de pagamento você prefere?\n\n• PIX: em até 2 vezes\n• Cartão de crédito: em até 3x (com juros)\n• Cartão de débito",c:["PIX","Cartão de crédito","Cartão de débito"],ph:"Escolha uma das opções",v:function(t){return ["PIX","Cartão de crédito","Cartão de débito"].indexOf(t)>-1||"Escolha uma das opções: PIX, Cartão de crédito ou Cartão de débito."}},
  {k:"obs",q:"Quer deixar alguma mensagem ou pergunta para a equipe organizadora?",c:["Não, obrigado(a)"],ph:"Ou escreva aqui"}
 ];
 var LABEL={nome:"Nome",whats:"WhatsApp",email:"E-mail",nasc:"Nascimento",cidade:"Cidade",primeira:"Primeiro retiro",saude:"Saúde/alimentação",pagto:"Forma de pagamento",obs:"Mensagem"};
@@ -139,7 +158,9 @@ var $=function(i){return document.getElementById(i)};
 var log=$("log"),inp=$("in"),form=$("f"),opts=$("opts"),act=$("act");
 function toEnd(){log.scrollTop=log.scrollHeight}
 if(window.ResizeObserver)new ResizeObserver(toEnd).observe(log);
-if(window.visualViewport)visualViewport.addEventListener("resize",toEnd);
+function fit(){var h=window.visualViewport?visualViewport.height:window.innerHeight;document.documentElement.style.setProperty("--vh",Math.round(h)+"px");document.documentElement.classList.toggle("kb",h<560);if(window.scrollY)window.scrollTo(0,0);toEnd()}
+if(window.visualViewport){visualViewport.addEventListener("resize",fit);visualViewport.addEventListener("scroll",fit)}
+window.addEventListener("resize",fit);fit();
 var i=0,data={},busy=false,wait=false;
 
 function robot(c){return '<svg class="'+c+'" viewBox="0 0 80 80" aria-hidden="true"><line x1="40" y1="9" x2="40" y2="17" stroke="#7d2f3a" stroke-width="3"/><circle class="ant rb-a" cx="40" cy="7" r="4"/><rect class="rb-h" x="7" y="28" width="7" height="12" rx="3"/><rect class="rb-h" x="66" y="28" width="7" height="12" rx="3"/><rect class="rb-w" x="14" y="16" width="52" height="38" rx="14"/><rect class="rb-h" x="20" y="22" width="40" height="26" rx="10"/><ellipse class="eye rb-e" cx="32" cy="33" rx="3.5" ry="4.5"/><ellipse class="eye rb-e" cx="48" cy="33" rx="3.5" ry="4.5"/><path class="mouth rb-m" d="M33 41 Q40 47 47 41"/><rect class="arm2 rb-h" x="10" y="58" width="9" height="15" rx="4.5"/><rect class="rb-h" x="22" y="56" width="36" height="20" rx="8"/><circle class="rb-a" cx="40" cy="66" r="4.5"/><rect class="arm rb-h" x="61" y="58" width="9" height="15" rx="4.5"/></svg>'}
@@ -160,12 +181,12 @@ function intro(){
   mood("wave",3200);
   botSeq([
     "Oi! 👋 Eu sou o Rob, o assistente virtual do retiro.",
-    "Aqui você faz a sua inscrição para o retiro “Cura da História da Vida”, de 05 a 08 de fevereiro de 2027, no feriado de carnaval.",
+    "Aqui você faz a sua inscrição para o retiro “Cura da História da Vida”, de 05 a 08 de fevereiro de 2027, no feriado de carnaval. O valor é R$ 550,00.",
     "São só "+STEPS.length+" perguntas rápidas, cerca de 2 minutos, e eu te acompanho em cada uma. Vamos começar?"
   ],function(){
     opts.innerHTML="";
     btn(opts,"Sim, vamos começar!",function(){startFlow("Sim, vamos começar!")});
-    btn(opts,"Tenho uma dúvida",function(){add("Tenho uma dúvida","me");clearUI();bot("Local e valores são confirmados pela organização depois da sua inscrição. O pagamento pode ser feito por PIX, cartão de crédito ou cartão de débito.\nSe preferir falar com uma pessoa, conclua a inscrição e a equipe entra em contato pelo WhatsApp.",function(){btn(opts,"Quero me inscrever",function(){startFlow("Quero me inscrever")})})});
+    btn(opts,"Tenho uma dúvida",function(){add("Tenho uma dúvida","me");clearUI();bot("O valor do retiro é R$ 550,00. Formas de pagamento: PIX em até 2 vezes, cartão de crédito em até 3x (com juros) ou cartão de débito. O local é confirmado pela organização depois da sua inscrição.\nSe preferir falar com uma pessoa, conclua a inscrição e a equipe entra em contato pelo WhatsApp.",function(){btn(opts,"Quero me inscrever",function(){startFlow("Quero me inscrever")})})});
   });
 }
 function progress(){$("pg").style.width=Math.round(i/STEPS.length*100)+"%";$("stp").textContent=i>=STEPS.length?"Revisão final":"Pergunta "+(i+1)+" de "+STEPS.length}
@@ -207,8 +228,9 @@ async function save(){
   }catch(e){}
   progress();$("pg").style.width="100%";$("stp").textContent="Inscrição enviada ✅";
   var nome1=data.nome.split(" ")[0];
-  var okMsg=st==="ja"?"Você já tinha enviado a inscrição com esse WhatsApp, "+nome1+". Não precisa enviar de novo.":"Inscrição recebida, "+nome1+"! ✅\nSeus dados já foram enviados para a organização. A equipe responde com as informações de local, valores e como concluir o pagamento na forma escolhida.\n\nSe quiser, avise a equipe também pelo WhatsApp.";
-  var msg=sheetOk?okMsg:"Obrigado, "+nome1+"! 🙏\nFalta só um passo: toque no botão “Enviar minha inscrição por WhatsApp” abaixo para a equipe receber os seus dados. A inscrição só vale depois de enviada.\n\nDepois disso, a equipe responde com as informações de local, valores e como concluir o pagamento na forma escolhida.";
+  var cond=({"PIX":"PIX em até 2 vezes","Cartão de crédito":"cartão de crédito em até 3x, com juros","Cartão de débito":"cartão de débito"})[data.pagto]||data.pagto;
+  var okMsg=st==="ja"?"Você já tinha enviado a inscrição com esse WhatsApp, "+nome1+". Não precisa enviar de novo.":"Inscrição recebida, "+nome1+"! ✅\nSeus dados já foram enviados para a organização. A equipe responde com as informações de local e como concluir o pagamento de R$ 550,00 ("+cond+").\n\nSe quiser, avise a equipe também pelo WhatsApp.";
+  var msg=sheetOk?okMsg:"Obrigado, "+nome1+"! 🙏\nFalta só um passo: toque no botão “Enviar minha inscrição por WhatsApp” abaixo para a equipe receber os seus dados. A inscrição só vale depois de enviada.\n\nDepois disso, a equipe responde com as informações de local e como concluir o pagamento de R$ 550,00 ("+cond+").";
   bot(msg,function(){
     mood("happy",2400);
     var text="Inscrição · Retiro Cura da História da Vida (05 a 08/02/2027)\n\n"+summary();
