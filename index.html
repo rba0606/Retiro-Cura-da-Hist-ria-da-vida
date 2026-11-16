@@ -175,19 +175,36 @@ function botSeq(a,cb){(function n(k){if(k>=a.length)return cb&&cb();bot(a[k],fun
 function clearUI(){opts.innerHTML="";act.innerHTML="";form.className="off"}
 function btn(parent,label,fn,cls){var b=document.createElement("button");b.textContent=label;if(cls)b.className=cls;b.onclick=fn;parent.appendChild(b)}
 
-function startFlow(label){add(label,"me");clearUI();ask()}
+var ENDERECO="Centro Mariápolis de Brasília - Casa de Eventos e Retiros, BR-080, 5000 - Brazlândia, Brasília - DF, 72773-010";
+var FAQ=[
+ {q:"Onde será?",map:1,a:"O retiro acontece no Centro Mariápolis de Brasília – Casa de Eventos e Retiros.\nEndereço: BR-080, 5000 – Brazlândia, Brasília – DF, CEP 72773-010."},
+ {q:"Dia e horário",a:"Início: 05/02/2027, às 19:30.\nEncerramento: 08/02/2027, às 16:00."},
+ {q:"O que levar?",a:"Leve:\n• Travesseiro, toalha e roupa de cama\n• Itens de higiene pessoal\n• Bíblia e caderno de anotações\n• Garrafa de água\n• Casaco"},
+ {q:"Valor e pagamento",a:"O valor do retiro é R$ 550,00.\n• PIX: em até 2 vezes\n• Cartão de crédito: em até 3x (com juros)\n• Cartão de débito\nA equipe envia os dados para o pagamento depois da sua inscrição."}
+];
+function faqMenu(){
+  clearUI();
+  btn(opts,"Fazer minha inscrição",function(){startFlow("Fazer minha inscrição")});
+  FAQ.forEach(function(f){btn(opts,f.q,function(){faqAsk(f)})});
+}
+function faqAsk(f){
+  add(f.q,"me");clearUI();
+  bot(f.a,function(){
+    if(f.map){var a=document.createElement("a");a.target="_blank";a.rel="noopener";a.textContent="Abrir no Google Maps";a.href="https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(ENDERECO);act.appendChild(a)}
+    bot("Posso ajudar em mais alguma coisa?",function(){
+      var m=act.firstChild;faqMenu();if(m)act.appendChild(m);
+    });
+  });
+}
+function startFlow(label){add(label,"me");clearUI();bot("Vamos lá! São só "+STEPS.length+" perguntas rápidas, cerca de 2 minutos, e eu te acompanho em cada uma.",ask)}
 function intro(){
   clearUI();log.innerHTML="";i=0;data={};$("stp").textContent="Boas-vindas";$("pg").style.width="0";
   mood("wave",3200);
   botSeq([
     "Oi! 👋 Eu sou o Rob, o assistente virtual do retiro.",
-    "Aqui você faz a sua inscrição para o retiro “Cura da História da Vida”, de 05 a 08 de fevereiro de 2027, no feriado de carnaval. O valor é R$ 550,00.",
-    "São só "+STEPS.length+" perguntas rápidas, cerca de 2 minutos, e eu te acompanho em cada uma. Vamos começar?"
-  ],function(){
-    opts.innerHTML="";
-    btn(opts,"Sim, vamos começar!",function(){startFlow("Sim, vamos começar!")});
-    btn(opts,"Tenho uma dúvida",function(){add("Tenho uma dúvida","me");clearUI();bot("O valor do retiro é R$ 550,00. Formas de pagamento: PIX em até 2 vezes, cartão de crédito em até 3x (com juros) ou cartão de débito. O local é confirmado pela organização depois da sua inscrição.\nSe preferir falar com uma pessoa, conclua a inscrição e a equipe entra em contato pelo WhatsApp.",function(){btn(opts,"Quero me inscrever",function(){startFlow("Quero me inscrever")})})});
-  });
+    "Seja bem-vindo(a) ao retiro “Cura da História da Vida”, de 05 a 08 de fevereiro de 2027, no feriado de carnaval. Que bom ter você por aqui! 🌿",
+    "Em que posso ajudar?"
+  ],faqMenu);
 }
 function progress(){$("pg").style.width=Math.round(i/STEPS.length*100)+"%";$("stp").textContent=i>=STEPS.length?"Revisão final":"Pergunta "+(i+1)+" de "+STEPS.length}
 function ask(){
@@ -229,8 +246,8 @@ async function save(){
   progress();$("pg").style.width="100%";$("stp").textContent="Inscrição enviada ✅";
   var nome1=data.nome.split(" ")[0];
   var cond=({"PIX":"PIX em até 2 vezes","Cartão de crédito":"cartão de crédito em até 3x, com juros","Cartão de débito":"cartão de débito"})[data.pagto]||data.pagto;
-  var okMsg=st==="ja"?"Você já tinha enviado a inscrição com esse WhatsApp, "+nome1+". Não precisa enviar de novo.":"Inscrição recebida, "+nome1+"! ✅\nSeus dados já foram enviados para a organização. A equipe responde com as informações de local e como concluir o pagamento de R$ 550,00 ("+cond+").\n\nSe quiser, avise a equipe também pelo WhatsApp.";
-  var msg=sheetOk?okMsg:"Obrigado, "+nome1+"! 🙏\nFalta só um passo: toque no botão “Enviar minha inscrição por WhatsApp” abaixo para a equipe receber os seus dados. A inscrição só vale depois de enviada.\n\nDepois disso, a equipe responde com as informações de local e como concluir o pagamento de R$ 550,00 ("+cond+").";
+  var okMsg=st==="ja"?"Você já tinha enviado a inscrição com esse WhatsApp, "+nome1+". Não precisa enviar de novo.":"Inscrição recebida, "+nome1+"! ✅\nSeus dados já foram enviados para a organização. A equipe responde com os dados para concluir o pagamento de R$ 550,00 ("+cond+"). O retiro começa em 05/02 às 19:30 e termina em 08/02 às 16:00, no Centro Mariápolis de Brasília.\n\nSe quiser, avise a equipe também pelo WhatsApp.";
+  var msg=sheetOk?okMsg:"Obrigado, "+nome1+"! 🙏\nFalta só um passo: toque no botão “Enviar minha inscrição por WhatsApp” abaixo para a equipe receber os seus dados. A inscrição só vale depois de enviada.\n\nDepois disso, a equipe responde com os dados para concluir o pagamento de R$ 550,00 ("+cond+"). O retiro começa em 05/02 às 19:30 e termina em 08/02 às 16:00, no Centro Mariápolis de Brasília.";
   bot(msg,function(){
     mood("happy",2400);
     var text="Inscrição · Retiro Cura da História da Vida (05 a 08/02/2027)\n\n"+summary();
